@@ -1,0 +1,6 @@
+C:/Users/Administrator/Desktop/cv/cmake-build-debug/CMakeFiles/sober.dir
+C:/Users/Administrator/Desktop/cv/cmake-build-debug/CMakeFiles/cv.dir
+C:/Users/Administrator/Desktop/cv/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Administrator/Desktop/cv/cmake-build-debug/CMakeFiles/practice.dir
+C:/Users/Administrator/Desktop/cv/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/Administrator/Desktop/cv/cmake-build-debug/CMakeFiles/test.dir

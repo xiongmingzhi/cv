@@ -1,0 +1,2140 @@
+node {
+  name: "self.x"
+  op: "Placeholder"
+  device: "/device:GPU:0"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: -1
+        }
+        dim {
+          size: 1801
+        }
+        dim {
+          size: 2
+        }
+      }
+    }
+  }
+}
+node {
+  name: "self.x_peak"
+  op: "Placeholder"
+  device: "/device:GPU:0"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: -1
+        }
+        dim {
+          size: 18
+        }
+        dim {
+          size: 4
+        }
+      }
+    }
+  }
+}
+node {
+  name: "l2_normalize/Square"
+  op: "Square"
+  input: "self.x"
+  device: "/device:GPU:0"
+}
+node {
+  name: "l2_normalize/Sum"
+  op: "Sum"
+  input: "l2_normalize/Square"
+  input: "l2_normalize/Sum/reduction_indices"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "l2_normalize/Maximum"
+  op: "Maximum"
+  input: "l2_normalize/Sum"
+  input: "l2_normalize/Maximum/y"
+  device: "/device:GPU:0"
+}
+node {
+  name: "l2_normalize/Rsqrt"
+  op: "Rsqrt"
+  input: "l2_normalize/Maximum"
+  device: "/device:GPU:0"
+}
+node {
+  name: "l2_normalize"
+  op: "Mul"
+  input: "self.x"
+  input: "l2_normalize/Rsqrt"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/kernel/read"
+  op: "Identity"
+  input: "x_1/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_1/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_1/bias/read"
+  op: "Identity"
+  input: "x_1/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_1/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/Shape"
+  op: "Shape"
+  input: "l2_normalize"
+  device: "/device:GPU:0"
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/GatherV2"
+  op: "GatherV2"
+  input: "x_1/Tensordot/Shape"
+  input: "x_1/Tensordot/free"
+  input: "x_1/Tensordot/GatherV2/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/GatherV2_1"
+  op: "GatherV2"
+  input: "x_1/Tensordot/Shape"
+  input: "x_1/Tensordot/axes"
+  input: "x_1/Tensordot/GatherV2_1/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/Prod"
+  op: "Prod"
+  input: "x_1/Tensordot/GatherV2"
+  input: "x_1/Tensordot/Const"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/Prod_1"
+  op: "Prod"
+  input: "x_1/Tensordot/GatherV2_1"
+  input: "x_1/Tensordot/Const_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/concat"
+  op: "ConcatV2"
+  input: "x_1/Tensordot/free"
+  input: "x_1/Tensordot/axes"
+  input: "x_1/Tensordot/concat/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/Tensordot/stack"
+  op: "Pack"
+  input: "x_1/Tensordot/Prod"
+  input: "x_1/Tensordot/Prod_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/transpose"
+  op: "Transpose"
+  input: "l2_normalize"
+  input: "x_1/Tensordot/concat"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/Tensordot/Reshape"
+  op: "Reshape"
+  input: "x_1/Tensordot/transpose"
+  input: "x_1/Tensordot/stack"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/Tensordot/transpose_1"
+  op: "Transpose"
+  input: "x_1/kernel/read"
+  input: "x_1/Tensordot/transpose_1/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/Tensordot/Reshape_1"
+  op: "Reshape"
+  input: "x_1/Tensordot/transpose_1"
+  input: "x_1/Tensordot/Reshape_1/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/Tensordot/MatMul"
+  op: "MatMul"
+  input: "x_1/Tensordot/Reshape"
+  input: "x_1/Tensordot/Reshape_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_1/Tensordot/concat_1"
+  op: "ConcatV2"
+  input: "x_1/Tensordot/GatherV2"
+  input: "x_1/Tensordot/Const_2"
+  input: "x_1/Tensordot/concat_1/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/Tensordot"
+  op: "Reshape"
+  input: "x_1/Tensordot/MatMul"
+  input: "x_1/Tensordot/concat_1"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_1/BiasAdd"
+  op: "BiasAdd"
+  input: "x_1/Tensordot"
+  input: "x_1/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "transpose"
+  op: "Transpose"
+  input: "x_1/BiasAdd"
+  input: "transpose/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/kernel/read"
+  op: "Identity"
+  input: "x_2/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_2/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_2/bias/read"
+  op: "Identity"
+  input: "x_2/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_2/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/Shape"
+  op: "Shape"
+  input: "transpose"
+  device: "/device:GPU:0"
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/GatherV2"
+  op: "GatherV2"
+  input: "x_2/Tensordot/Shape"
+  input: "x_2/Tensordot/free"
+  input: "x_2/Tensordot/GatherV2/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/GatherV2_1"
+  op: "GatherV2"
+  input: "x_2/Tensordot/Shape"
+  input: "x_2/Tensordot/axes"
+  input: "x_2/Tensordot/GatherV2_1/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/Prod"
+  op: "Prod"
+  input: "x_2/Tensordot/GatherV2"
+  input: "x_2/Tensordot/Const"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/Prod_1"
+  op: "Prod"
+  input: "x_2/Tensordot/GatherV2_1"
+  input: "x_2/Tensordot/Const_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/concat"
+  op: "ConcatV2"
+  input: "x_2/Tensordot/free"
+  input: "x_2/Tensordot/axes"
+  input: "x_2/Tensordot/concat/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/Tensordot/stack"
+  op: "Pack"
+  input: "x_2/Tensordot/Prod"
+  input: "x_2/Tensordot/Prod_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/transpose"
+  op: "Transpose"
+  input: "transpose"
+  input: "x_2/Tensordot/concat"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/Tensordot/Reshape"
+  op: "Reshape"
+  input: "x_2/Tensordot/transpose"
+  input: "x_2/Tensordot/stack"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/Tensordot/transpose_1"
+  op: "Transpose"
+  input: "x_2/kernel/read"
+  input: "x_2/Tensordot/transpose_1/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/Tensordot/Reshape_1"
+  op: "Reshape"
+  input: "x_2/Tensordot/transpose_1"
+  input: "x_2/Tensordot/Reshape_1/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/Tensordot/MatMul"
+  op: "MatMul"
+  input: "x_2/Tensordot/Reshape"
+  input: "x_2/Tensordot/Reshape_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_2/Tensordot/concat_1"
+  op: "ConcatV2"
+  input: "x_2/Tensordot/GatherV2"
+  input: "x_2/Tensordot/Const_2"
+  input: "x_2/Tensordot/concat_1/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/Tensordot"
+  op: "Reshape"
+  input: "x_2/Tensordot/MatMul"
+  input: "x_2/Tensordot/concat_1"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_2/BiasAdd"
+  op: "BiasAdd"
+  input: "x_2/Tensordot"
+  input: "x_2/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "transpose_1"
+  op: "Transpose"
+  input: "x_2/BiasAdd"
+  input: "transpose_1/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "Reshape"
+  op: "Reshape"
+  input: "transpose_1"
+  input: "Reshape/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_3/kernel/read"
+  op: "Identity"
+  input: "x_3/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_3/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_3/bias/read"
+  op: "Identity"
+  input: "x_3/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_3/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_3/Conv2D"
+  op: "Conv2D"
+  input: "Reshape"
+  input: "x_3/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "x_3/BiasAdd"
+  op: "BiasAdd"
+  input: "x_3/Conv2D"
+  input: "x_3/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_3/Relu6"
+  op: "Relu6"
+  input: "x_3/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "batch_normalization/gamma/read"
+  op: "Identity"
+  input: "batch_normalization/gamma"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization/beta/read"
+  op: "Identity"
+  input: "batch_normalization/beta"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization/beta"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization/moving_mean/read"
+  op: "Identity"
+  input: "batch_normalization/moving_mean"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization/moving_variance/read"
+  op: "Identity"
+  input: "batch_normalization/moving_variance"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization/FusedBatchNorm"
+  op: "FusedBatchNorm"
+  input: "x_3/Relu6"
+  input: "batch_normalization/gamma/read"
+  input: "batch_normalization/beta/read"
+  input: "batch_normalization/moving_mean/read"
+  input: "batch_normalization/moving_variance/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "epsilon"
+    value {
+      f: 0.001
+    }
+  }
+}
+node {
+  name: "x_4/kernel/read"
+  op: "Identity"
+  input: "x_4/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_4/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_4/bias/read"
+  op: "Identity"
+  input: "x_4/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_4/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_4/Conv2D"
+  op: "Conv2D"
+  input: "batch_normalization/FusedBatchNorm"
+  input: "x_4/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "x_4/BiasAdd"
+  op: "BiasAdd"
+  input: "x_4/Conv2D"
+  input: "x_4/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_4/Relu6"
+  op: "Relu6"
+  input: "x_4/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "batch_normalization_1/gamma/read"
+  op: "Identity"
+  input: "batch_normalization_1/gamma"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_1/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_1/beta/read"
+  op: "Identity"
+  input: "batch_normalization_1/beta"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_1/beta"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_1/moving_mean/read"
+  op: "Identity"
+  input: "batch_normalization_1/moving_mean"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_1/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_1/moving_variance/read"
+  op: "Identity"
+  input: "batch_normalization_1/moving_variance"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_1/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_1/FusedBatchNorm"
+  op: "FusedBatchNorm"
+  input: "x_4/Relu6"
+  input: "batch_normalization_1/gamma/read"
+  input: "batch_normalization_1/beta/read"
+  input: "batch_normalization_1/moving_mean/read"
+  input: "batch_normalization_1/moving_variance/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "epsilon"
+    value {
+      f: 0.001
+    }
+  }
+}
+node {
+  name: "x_5/kernel/read"
+  op: "Identity"
+  input: "x_5/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_5/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_5/bias/read"
+  op: "Identity"
+  input: "x_5/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_5/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_5/Conv2D"
+  op: "Conv2D"
+  input: "batch_normalization_1/FusedBatchNorm"
+  input: "x_5/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "x_5/BiasAdd"
+  op: "BiasAdd"
+  input: "x_5/Conv2D"
+  input: "x_5/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_5/Relu6"
+  op: "Relu6"
+  input: "x_5/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "batch_normalization_2/gamma/read"
+  op: "Identity"
+  input: "batch_normalization_2/gamma"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_2/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_2/beta/read"
+  op: "Identity"
+  input: "batch_normalization_2/beta"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_2/beta"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_2/moving_mean/read"
+  op: "Identity"
+  input: "batch_normalization_2/moving_mean"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_2/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_2/moving_variance/read"
+  op: "Identity"
+  input: "batch_normalization_2/moving_variance"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_2/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_2/FusedBatchNorm"
+  op: "FusedBatchNorm"
+  input: "x_5/Relu6"
+  input: "batch_normalization_2/gamma/read"
+  input: "batch_normalization_2/beta/read"
+  input: "batch_normalization_2/moving_mean/read"
+  input: "batch_normalization_2/moving_variance/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "epsilon"
+    value {
+      f: 0.001
+    }
+  }
+}
+node {
+  name: "flatten/Shape"
+  op: "Shape"
+  input: "batch_normalization_2/FusedBatchNorm"
+  device: "/device:GPU:0"
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "flatten/strided_slice"
+  op: "StridedSlice"
+  input: "flatten/Shape"
+  input: "flatten/strided_slice/stack"
+  input: "flatten/strided_slice/stack_1"
+  input: "flatten/strided_slice/stack_2"
+  device: "/device:GPU:0"
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "flatten/Reshape/shape"
+  op: "Pack"
+  input: "flatten/strided_slice"
+  input: "flatten/Reshape/shape/1"
+  device: "/device:GPU:0"
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "flatten/Reshape"
+  op: "Reshape"
+  input: "batch_normalization_2/FusedBatchNorm"
+  input: "flatten/Reshape/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "logits_1/kernel/read"
+  op: "Identity"
+  input: "logits_1/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@logits_1/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "logits_1/bias/read"
+  op: "Identity"
+  input: "logits_1/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@logits_1/bias"
+      }
+    }
+  }
+}
+node {
+  name: "logits_1/MatMul"
+  op: "MatMul"
+  input: "flatten/Reshape"
+  input: "logits_1/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "logits_1/BiasAdd"
+  op: "BiasAdd"
+  input: "logits_1/MatMul"
+  input: "logits_1/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/kernel/read"
+  op: "Identity"
+  input: "x_peaks_1/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_1/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_1/bias/read"
+  op: "Identity"
+  input: "x_peaks_1/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_1/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/Shape"
+  op: "Shape"
+  input: "self.x_peak"
+  device: "/device:GPU:0"
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/GatherV2"
+  op: "GatherV2"
+  input: "x_peaks_1/Tensordot/Shape"
+  input: "x_peaks_1/Tensordot/free"
+  input: "x_peaks_1/Tensordot/GatherV2/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/GatherV2_1"
+  op: "GatherV2"
+  input: "x_peaks_1/Tensordot/Shape"
+  input: "x_peaks_1/Tensordot/axes"
+  input: "x_peaks_1/Tensordot/GatherV2_1/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/Prod"
+  op: "Prod"
+  input: "x_peaks_1/Tensordot/GatherV2"
+  input: "x_peaks_1/Tensordot/Const"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/Prod_1"
+  op: "Prod"
+  input: "x_peaks_1/Tensordot/GatherV2_1"
+  input: "x_peaks_1/Tensordot/Const_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/concat"
+  op: "ConcatV2"
+  input: "x_peaks_1/Tensordot/free"
+  input: "x_peaks_1/Tensordot/axes"
+  input: "x_peaks_1/Tensordot/concat/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/Tensordot/stack"
+  op: "Pack"
+  input: "x_peaks_1/Tensordot/Prod"
+  input: "x_peaks_1/Tensordot/Prod_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/transpose"
+  op: "Transpose"
+  input: "self.x_peak"
+  input: "x_peaks_1/Tensordot/concat"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/Tensordot/Reshape"
+  op: "Reshape"
+  input: "x_peaks_1/Tensordot/transpose"
+  input: "x_peaks_1/Tensordot/stack"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/Tensordot/transpose_1"
+  op: "Transpose"
+  input: "x_peaks_1/kernel/read"
+  input: "x_peaks_1/Tensordot/transpose_1/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/Tensordot/Reshape_1"
+  op: "Reshape"
+  input: "x_peaks_1/Tensordot/transpose_1"
+  input: "x_peaks_1/Tensordot/Reshape_1/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/Tensordot/MatMul"
+  op: "MatMul"
+  input: "x_peaks_1/Tensordot/Reshape"
+  input: "x_peaks_1/Tensordot/Reshape_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_peaks_1/Tensordot/concat_1"
+  op: "ConcatV2"
+  input: "x_peaks_1/Tensordot/GatherV2"
+  input: "x_peaks_1/Tensordot/Const_2"
+  input: "x_peaks_1/Tensordot/concat_1/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/Tensordot"
+  op: "Reshape"
+  input: "x_peaks_1/Tensordot/MatMul"
+  input: "x_peaks_1/Tensordot/concat_1"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/BiasAdd"
+  op: "BiasAdd"
+  input: "x_peaks_1/Tensordot"
+  input: "x_peaks_1/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_1/Relu6"
+  op: "Relu6"
+  input: "x_peaks_1/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "transpose_2"
+  op: "Transpose"
+  input: "x_peaks_1/Relu6"
+  input: "transpose_2/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/kernel/read"
+  op: "Identity"
+  input: "x_peaks_2/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_2/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_2/bias/read"
+  op: "Identity"
+  input: "x_peaks_2/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_2/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/Shape"
+  op: "Shape"
+  input: "transpose_2"
+  device: "/device:GPU:0"
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/GatherV2"
+  op: "GatherV2"
+  input: "x_peaks_2/Tensordot/Shape"
+  input: "x_peaks_2/Tensordot/free"
+  input: "x_peaks_2/Tensordot/GatherV2/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/GatherV2_1"
+  op: "GatherV2"
+  input: "x_peaks_2/Tensordot/Shape"
+  input: "x_peaks_2/Tensordot/axes"
+  input: "x_peaks_2/Tensordot/GatherV2_1/axis"
+  device: "/device:GPU:0"
+  attr {
+    key: "Taxis"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/Prod"
+  op: "Prod"
+  input: "x_peaks_2/Tensordot/GatherV2"
+  input: "x_peaks_2/Tensordot/Const"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/Prod_1"
+  op: "Prod"
+  input: "x_peaks_2/Tensordot/GatherV2_1"
+  input: "x_peaks_2/Tensordot/Const_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/concat"
+  op: "ConcatV2"
+  input: "x_peaks_2/Tensordot/free"
+  input: "x_peaks_2/Tensordot/axes"
+  input: "x_peaks_2/Tensordot/concat/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/Tensordot/stack"
+  op: "Pack"
+  input: "x_peaks_2/Tensordot/Prod"
+  input: "x_peaks_2/Tensordot/Prod_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/transpose"
+  op: "Transpose"
+  input: "transpose_2"
+  input: "x_peaks_2/Tensordot/concat"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/Tensordot/Reshape"
+  op: "Reshape"
+  input: "x_peaks_2/Tensordot/transpose"
+  input: "x_peaks_2/Tensordot/stack"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/Tensordot/transpose_1"
+  op: "Transpose"
+  input: "x_peaks_2/kernel/read"
+  input: "x_peaks_2/Tensordot/transpose_1/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/Tensordot/Reshape_1"
+  op: "Reshape"
+  input: "x_peaks_2/Tensordot/transpose_1"
+  input: "x_peaks_2/Tensordot/Reshape_1/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/Tensordot/MatMul"
+  op: "MatMul"
+  input: "x_peaks_2/Tensordot/Reshape"
+  input: "x_peaks_2/Tensordot/Reshape_1"
+  device: "/device:GPU:0"
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "x_peaks_2/Tensordot/concat_1"
+  op: "ConcatV2"
+  input: "x_peaks_2/Tensordot/GatherV2"
+  input: "x_peaks_2/Tensordot/Const_2"
+  input: "x_peaks_2/Tensordot/concat_1/axis"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/Tensordot"
+  op: "Reshape"
+  input: "x_peaks_2/Tensordot/MatMul"
+  input: "x_peaks_2/Tensordot/concat_1"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/BiasAdd"
+  op: "BiasAdd"
+  input: "x_peaks_2/Tensordot"
+  input: "x_peaks_2/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_2/Relu6"
+  op: "Relu6"
+  input: "x_peaks_2/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "transpose_3"
+  op: "Transpose"
+  input: "x_peaks_2/Relu6"
+  input: "transpose_3/perm"
+  device: "/device:GPU:0"
+}
+node {
+  name: "Reshape_1"
+  op: "Reshape"
+  input: "transpose_3"
+  input: "Reshape_1/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_3/kernel/read"
+  op: "Identity"
+  input: "x_peaks_3/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_3/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_3/bias/read"
+  op: "Identity"
+  input: "x_peaks_3/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_3/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_3/Conv2D"
+  op: "Conv2D"
+  input: "Reshape_1"
+  input: "x_peaks_3/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_3/BiasAdd"
+  op: "BiasAdd"
+  input: "x_peaks_3/Conv2D"
+  input: "x_peaks_3/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_3/Relu6"
+  op: "Relu6"
+  input: "x_peaks_3/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "batch_normalization_3/gamma/read"
+  op: "Identity"
+  input: "batch_normalization_3/gamma"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_3/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_3/beta/read"
+  op: "Identity"
+  input: "batch_normalization_3/beta"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_3/beta"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_3/moving_mean/read"
+  op: "Identity"
+  input: "batch_normalization_3/moving_mean"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_3/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_3/moving_variance/read"
+  op: "Identity"
+  input: "batch_normalization_3/moving_variance"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_3/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_3/FusedBatchNorm"
+  op: "FusedBatchNorm"
+  input: "x_peaks_3/Relu6"
+  input: "batch_normalization_3/gamma/read"
+  input: "batch_normalization_3/beta/read"
+  input: "batch_normalization_3/moving_mean/read"
+  input: "batch_normalization_3/moving_variance/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "epsilon"
+    value {
+      f: 0.001
+    }
+  }
+}
+node {
+  name: "x_peaks_4/kernel/read"
+  op: "Identity"
+  input: "x_peaks_4/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_4/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_4/bias/read"
+  op: "Identity"
+  input: "x_peaks_4/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peaks_4/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_4/Conv2D"
+  op: "Conv2D"
+  input: "batch_normalization_3/FusedBatchNorm"
+  input: "x_peaks_4/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "x_peaks_4/BiasAdd"
+  op: "BiasAdd"
+  input: "x_peaks_4/Conv2D"
+  input: "x_peaks_4/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peaks_4/Relu6"
+  op: "Relu6"
+  input: "x_peaks_4/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "batch_normalization_4/gamma/read"
+  op: "Identity"
+  input: "batch_normalization_4/gamma"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_4/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_4/beta/read"
+  op: "Identity"
+  input: "batch_normalization_4/beta"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_4/beta"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_4/moving_mean/read"
+  op: "Identity"
+  input: "batch_normalization_4/moving_mean"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_4/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_4/moving_variance/read"
+  op: "Identity"
+  input: "batch_normalization_4/moving_variance"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_4/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_4/FusedBatchNorm"
+  op: "FusedBatchNorm"
+  input: "x_peaks_4/Relu6"
+  input: "batch_normalization_4/gamma/read"
+  input: "batch_normalization_4/beta/read"
+  input: "batch_normalization_4/moving_mean/read"
+  input: "batch_normalization_4/moving_variance/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "epsilon"
+    value {
+      f: 0.001
+    }
+  }
+}
+node {
+  name: "x_peasks_5/kernel/read"
+  op: "Identity"
+  input: "x_peasks_5/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peasks_5/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "x_peasks_5/bias/read"
+  op: "Identity"
+  input: "x_peasks_5/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@x_peasks_5/bias"
+      }
+    }
+  }
+}
+node {
+  name: "x_peasks_5/Conv2D"
+  op: "Conv2D"
+  input: "batch_normalization_4/FusedBatchNorm"
+  input: "x_peasks_5/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "x_peasks_5/BiasAdd"
+  op: "BiasAdd"
+  input: "x_peasks_5/Conv2D"
+  input: "x_peasks_5/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "x_peasks_5/Relu6"
+  op: "Relu6"
+  input: "x_peasks_5/BiasAdd"
+  device: "/device:GPU:0"
+}
+node {
+  name: "batch_normalization_5/gamma/read"
+  op: "Identity"
+  input: "batch_normalization_5/gamma"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_5/gamma"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_5/beta/read"
+  op: "Identity"
+  input: "batch_normalization_5/beta"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_5/beta"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_5/moving_mean/read"
+  op: "Identity"
+  input: "batch_normalization_5/moving_mean"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_5/moving_mean"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_5/moving_variance/read"
+  op: "Identity"
+  input: "batch_normalization_5/moving_variance"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@batch_normalization_5/moving_variance"
+      }
+    }
+  }
+}
+node {
+  name: "batch_normalization_5/FusedBatchNorm"
+  op: "FusedBatchNorm"
+  input: "x_peasks_5/Relu6"
+  input: "batch_normalization_5/gamma/read"
+  input: "batch_normalization_5/beta/read"
+  input: "batch_normalization_5/moving_mean/read"
+  input: "batch_normalization_5/moving_variance/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "epsilon"
+    value {
+      f: 0.001
+    }
+  }
+}
+node {
+  name: "flatten_1/Shape"
+  op: "Shape"
+  input: "batch_normalization_5/FusedBatchNorm"
+  device: "/device:GPU:0"
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "flatten_1/strided_slice"
+  op: "StridedSlice"
+  input: "flatten_1/Shape"
+  input: "flatten_1/strided_slice/stack"
+  input: "flatten_1/strided_slice/stack_1"
+  input: "flatten_1/strided_slice/stack_2"
+  device: "/device:GPU:0"
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "flatten_1/Reshape/shape"
+  op: "Pack"
+  input: "flatten_1/strided_slice"
+  input: "flatten_1/Reshape/shape/1"
+  device: "/device:GPU:0"
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "flatten_1/Reshape"
+  op: "Reshape"
+  input: "batch_normalization_5/FusedBatchNorm"
+  input: "flatten_1/Reshape/shape"
+  device: "/device:GPU:0"
+}
+node {
+  name: "peak_logits_1/kernel/read"
+  op: "Identity"
+  input: "peak_logits_1/kernel"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@peak_logits_1/kernel"
+      }
+    }
+  }
+}
+node {
+  name: "peak_logits_1/bias/read"
+  op: "Identity"
+  input: "peak_logits_1/bias"
+  device: "/device:GPU:0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@peak_logits_1/bias"
+      }
+    }
+  }
+}
+node {
+  name: "peak_logits_1/MatMul"
+  op: "MatMul"
+  input: "flatten_1/Reshape"
+  input: "peak_logits_1/kernel/read"
+  device: "/device:GPU:0"
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "peak_logits_1/BiasAdd"
+  op: "BiasAdd"
+  input: "peak_logits_1/MatMul"
+  input: "peak_logits_1/bias/read"
+  device: "/device:GPU:0"
+}
+node {
+  name: "Mul"
+  op: "Mul"
+  input: "logits_1/BiasAdd"
+  input: "Mul/y"
+  device: "/device:GPU:0"
+}
+node {
+  name: "Mul_1"
+  op: "Mul"
+  input: "peak_logits_1/BiasAdd"
+  input: "Mul_1/y"
+  device: "/device:GPU:0"
+}
+node {
+  name: "all_logits"
+  op: "Add"
+  input: "Mul"
+  input: "Mul_1"
+  device: "/device:GPU:0"
+}
+library {
+}
